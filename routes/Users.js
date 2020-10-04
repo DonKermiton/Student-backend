@@ -89,7 +89,7 @@ users.get('/profile', (req, res) => {
     const decode = jwt.verify(req.headers['authorization'], process.env.SECRET_KEY);
 
     User.findOne({
-        attributes: ['first_name', 'last_name', 'email', 'id', 'accountType', 'photo'],
+        attributes: ['first_name', 'last_name', 'email', 'id', 'accountType', 'group'],
         where: {
             id: decode.id
         }
@@ -108,7 +108,7 @@ users.get('/profile/:id', (req, res) => {
     const id = req.params.id;
 
     User.findOne({
-        attributes: ['first_name', 'last_name', 'email', 'id', 'accountType', 'photo'],
+        attributes: ['first_name', 'last_name', 'email', 'id', 'accountType', 'group'],
         where: {
             id: id,
         }

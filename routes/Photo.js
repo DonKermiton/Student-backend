@@ -14,7 +14,7 @@ process.env.SECRET_KEY = 'secret';
 
 
 const upload = multer({
-    dest: "./images"
+    dest: "../images"
     // you might also want to set some limits: https://github.com/expressjs/multer#limits
 });
 
@@ -56,8 +56,8 @@ photos.get('/getUserProfilePhoto/:background/:userID', (req, res) => {
     photo.findOne({
         where: {
             ownerID: userID,
-            isFront: isBackground ? 0 : 1,
-            isBackground: isBackground ? 1 : 0,
+            isFront: !isBackground ? 1 : 0,
+            isBackground: !isBackground ? 0 : 1,
         }
     }).then(photo => {
         console.log(photo);
@@ -77,8 +77,20 @@ photos.get('/getUserProfilePhoto/:background/:userID', (req, res) => {
     });
 });
 
-photos.post('/upload', upload.single('file'), (req, res) => {
+photos.get('/countProfileImage/:id', (req, res) => {
+    const id = req.params.id;
+    console.log(id);
+    photo.count({
+            where: {
+                ownerID: id,
+            }
+        }
+    ).then(console.log)
+});
+
+photos.put('/upload', upload.single('file'), (req, res) => {
     const decode = jwt.verify(req.headers['authorization'], process.env.SECRET_KEY);
+    console.log(req.file)
     const tempPath = req.file.path;
 
     const targetPath = path.join(__dirname, `../images/${decode.id}/${req.file.filename}.jpg`);
@@ -87,6 +99,7 @@ photos.post('/upload', upload.single('file'), (req, res) => {
         fs.mkdirSync(`./images/${decode.id}`);
         res.send('created');
     }
+
 
     const photoObj = {
         imgLink: `${req.file.filename}.jpg`,
@@ -155,7 +168,7 @@ photos.patch('/updatePhoto/:type/:photoID', (req, res) => {
             ownerID: `${decode.id}`,
         }
     }).then(() => {
-        res.send("Updated");
+            res.send("Updated");
         }
     ).catch((err) => {
         res.send(err);

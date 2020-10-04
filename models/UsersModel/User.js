@@ -27,7 +27,7 @@ module.exports = db.sequelize.define(
         accountType: {
             type: Sequelize.INTEGER,
         },
-        photo: {
+        group: {
             type: Sequelize.STRING
         }
     },
