@@ -132,6 +132,15 @@ photos.put('/upload', upload.single('file'), (req, res) => {
     }
 });
 
+photos.get('/countUserPhoto/:id', (req, res) => {
+    photo.count({
+        where: {
+            ownerID: req.params.id
+        }
+    }).then(number => res.json(number))
+        .catch(res.send)
+});
+
 photos.delete('/delete/:url', (req, res) => {
     const decode = jwt.verify(req.header('authorization'), process.env.SECRET_KEY);
     const url = req.params.url;
