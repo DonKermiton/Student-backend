@@ -7,6 +7,7 @@ const fs = require('fs');
 const multer = require('multer');
 
 const photo = require('../models/PhotoModel/Photo');
+const json = require("body-parser/lib/types/json");
 
 photos.use(cors());
 
@@ -183,6 +184,25 @@ photos.patch('/updatePhoto/:type/:photoID', (req, res) => {
         res.send(err);
     });
 });
+
+photos.get('/getPhotoCollectionInfo/:limit/:id', (req, res) => {
+
+    photo.findAll({
+        where: {
+            ownerID: +req.params.id,
+        },
+        order: [['Date', "DESC"]],
+
+        limit: +req.params.limit
+    }).then(photo => {
+        res.json(photo);
+    }).catch(err => res.send(err));
+
+});
+
+photos.get('/getSelectedPhoto/:id/:url', (req, res) => {
+        res.sendFile(req.params.url, {root: path.join(__dirname, `../images/${req.params.id}`)});
+})
 
 
 module.exports = photos;

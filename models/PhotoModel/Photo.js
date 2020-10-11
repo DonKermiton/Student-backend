@@ -15,6 +15,9 @@ module.exports = db.sequelize.define(
         ownerID: {
             type: Sequelize.INTEGER,
         },
+        Date: {
+            type: Sequelize.DATE,
+        },
         Like: {
             type: Sequelize.INTEGER,
         },
