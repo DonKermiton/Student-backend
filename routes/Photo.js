@@ -142,7 +142,7 @@ photos.get('/countUserPhoto/:id', (req, res) => {
         .catch(res.send)
 });
 
-photos.delete('/delete/:url', (req, res) => {
+photos.delete('/delete/:url/:id', (req, res) => {
     const decode = jwt.verify(req.header('authorization'), process.env.SECRET_KEY);
     const url = req.params.url;
     if (!decode) {
