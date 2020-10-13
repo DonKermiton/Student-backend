@@ -6,6 +6,7 @@ const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
 
+const photoLikes = require('../models/PhotoModel/PhotoLikes')
 const photo = require('../models/PhotoModel/Photo');
 const json = require("body-parser/lib/types/json");
 
@@ -58,7 +59,7 @@ photos.get('/getUserProfilePhoto/:background/:userID', (req, res) => {
         where: {
             ownerID: userID,
             isFront: !isBackground ? 1 : 0,
-            isBackground: !isBackground ? 0 : 1,
+            isBackground: isBackground ? 0 : 1,
         }
     }).then(photo => {
         console.log(photo);
@@ -78,7 +79,7 @@ photos.get('/getUserProfilePhoto/:background/:userID', (req, res) => {
     });
 });
 
-photos.get('/countProfileImage/:id', (req, res) => {
+/*photos.get('/countProfileImage/:id', (req, res) => {
     const id = req.params.id;
     console.log(id);
     photo.count({
@@ -87,12 +88,13 @@ photos.get('/countProfileImage/:id', (req, res) => {
             }
         }
     ).then(console.log)
-});
+});*/
 
 photos.put('/upload', upload.single('file'), (req, res) => {
     const decode = jwt.verify(req.headers['authorization'], process.env.SECRET_KEY);
     console.log(req.file)
     const tempPath = req.file.path;
+
 
     const targetPath = path.join(__dirname, `../images/${decode.id}/${req.file.filename}.jpg`);
 
@@ -108,6 +110,7 @@ photos.put('/upload', upload.single('file'), (req, res) => {
         Like: 0,
         isFront: 0,
         isBackground: 0,
+        Date: new Date().getTimezoneOffset(),
     };
 
     photo.create(photoObj);
@@ -149,12 +152,18 @@ photos.delete('/delete/:url/:id', (req, res) => {
         return res.send("not Auth");
     }
 
+    photoLikes.destroy({
+        where: {
+            id: req.params.id,
+        }
+    })
+
     photo.destroy({
         where: {
             ownerID: decode.id,
             imgLink: url,
         }
-    });
+    })
 
     fs.unlink(`./images/${decode.id}/${url}`, (err) => {
         if (err) console.log(err);
@@ -163,21 +172,24 @@ photos.delete('/delete/:url/:id', (req, res) => {
     res.send('deleted');
 });
 
-photos.patch('/updatePhoto/:type/:photoID', (req, res) => {
+photos.patch('/updatePhoto/:type', (req, res) => {
     const decode = jwt.verify(req.header('authorization'), process.env.SECRET_KEY);
     if (!decode) {
         return res.send("not Auth");
     }
 
+    console.log('inUpdatePhoto')
+
     photo.update({
-        isFront: req.params.type ? 1 : 0,
-        isBackground: req.params.type ? 0 : 1,
+        isFront: 0,
+        // isBackground: req.params.type !==  0 ? 0 : 1
     }, {
         where: {
-            id: req.params.photoID,
+            id: req.body.id,
             ownerID: `${decode.id}`,
         }
-    }).then(() => {
+    }).then((e) => {
+            console.log(e);
             res.send("Updated");
         }
     ).catch((err) => {
@@ -187,13 +199,14 @@ photos.patch('/updatePhoto/:type/:photoID', (req, res) => {
 
 photos.get('/getPhotoCollectionInfo/:limit/:id', (req, res) => {
 
+
+
     photo.findAll({
         where: {
             ownerID: +req.params.id,
         },
         order: [['Date', "DESC"]],
-
-        limit: +req.params.limit
+         limit: +req.params.limit
     }).then(photo => {
         res.json(photo);
     }).catch(err => res.send(err));
@@ -201,7 +214,7 @@ photos.get('/getPhotoCollectionInfo/:limit/:id', (req, res) => {
 });
 
 photos.get('/getSelectedPhoto/:id/:url', (req, res) => {
-        res.sendFile(req.params.url, {root: path.join(__dirname, `../images/${req.params.id}`)});
+    res.sendFile(req.params.url, {root: path.join(__dirname, `../images/${req.params.id}`)});
 })
 
 
