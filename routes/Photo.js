@@ -79,17 +79,6 @@ photos.get('/getUserProfilePhoto/:background/:userID', (req, res) => {
     });
 });
 
-/*photos.get('/countProfileImage/:id', (req, res) => {
-    const id = req.params.id;
-    console.log(id);
-    photo.count({
-            where: {
-                ownerID: id,
-            }
-        }
-    ).then(console.log)
-});*/
-
 photos.put('/upload', upload.single('file'), (req, res) => {
     const decode = jwt.verify(req.headers['authorization'], process.env.SECRET_KEY);
     console.log(req.file)
@@ -172,41 +161,14 @@ photos.delete('/delete/:url/:id', (req, res) => {
     res.send('deleted');
 });
 
-photos.patch('/updatePhoto/:type', (req, res) => {
-    const decode = jwt.verify(req.header('authorization'), process.env.SECRET_KEY);
-    if (!decode) {
-        return res.send("not Auth");
-    }
-
-    console.log('inUpdatePhoto')
-
-    photo.update({
-        isFront: 0,
-        // isBackground: req.params.type !==  0 ? 0 : 1
-    }, {
-        where: {
-            id: req.body.id,
-            ownerID: `${decode.id}`,
-        }
-    }).then((e) => {
-            console.log(e);
-            res.send("Updated");
-        }
-    ).catch((err) => {
-        res.send(err);
-    });
-});
-
 photos.get('/getPhotoCollectionInfo/:limit/:id', (req, res) => {
-
-
 
     photo.findAll({
         where: {
             ownerID: +req.params.id,
         },
         order: [['Date', "DESC"]],
-         limit: +req.params.limit
+        limit: +req.params.limit
     }).then(photo => {
         res.json(photo);
     }).catch(err => res.send(err));
@@ -215,6 +177,85 @@ photos.get('/getPhotoCollectionInfo/:limit/:id', (req, res) => {
 
 photos.get('/getSelectedPhoto/:id/:url', (req, res) => {
     res.sendFile(req.params.url, {root: path.join(__dirname, `../images/${req.params.id}`)});
+});
+
+photos.patch('/setImageAsFront/:id', (req, res) => {
+    const decode = jwt.verify(req.header('authorization'), process.env.SECRET_KEY);
+
+    /*photo.update({
+        isFront: 0,
+    }, {
+        where: {
+            ownerID: decode.id
+        }
+    })*/
+
+    photo.update({
+        isFront: 1,
+    }, {
+        where: {
+            id: 5,
+            ownerID: decode.id
+        }
+    })
+
+    res.send('updated');
+});
+
+photos.patch('/setImageAsBack/:id', (req, res) => {
+    const decode = jwt.verify(req.header('authorization'), process.env.SECRET_KEY);
+
+    photo.update({
+        isBackground: 0,
+    }, {
+        where: {
+            ownerID: decode.id
+        }
+    })
+
+    photo.update({
+        isBackground: 1,
+    }, {
+        where: {
+            id: +req.params.id,
+            ownerID: decode.id
+        }
+    })
+
+    res.send('updated');
+});
+
+photos.get('/getUserProfile/Front/:id', (req, res) => {
+    photo.findOne({
+        where: {
+            isBackground: 1,
+            ownerID: +req.params.id,
+        }
+    })
+        .then(photo=> {
+            if(photo) {
+                res.sendFile(photo.imgLink, {root: path.join(__dirname, `../images/${req.params.id}`)});
+            } else {
+                res.send('no photo')
+            }
+        })
+        .catch(res.send)
+})
+photos.get('/getUserProfile/Back/:id', (req, res) => {
+    photo.findOne({
+        where: {
+            isBackground: 1,
+            ownerID: +req.params.id,
+        }
+    })
+        .then(photo=> {
+            if(photo) {
+                res.sendFile(photo.imgLink, {root: path.join(__dirname, `../images/${req.params.id}`)});
+            } else {
+                res.send('no photo')
+            }
+        })
+        .catch(res.send)
 })
 
 
