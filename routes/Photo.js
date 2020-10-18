@@ -50,48 +50,16 @@ photos.get('/getPhoto/:userID/:photoID', (req, res) => {
     });
 });
 
-photos.get('/getUserProfilePhoto/:background/:userID', (req, res) => {
-    const userID = req.params.userID;
-    const isBackground = req.params.background;
-
-
-    photo.findOne({
-        where: {
-            ownerID: userID,
-            isFront: !isBackground ? 1 : 0,
-            isBackground: isBackground ? 0 : 1,
-        }
-    }).then(photo => {
-        console.log(photo);
-
-        const stream = fs.createReadStream(`./images/${photo.ownerID}/${photo.imgLink}`);
-        console.log(`../images/${photo.ownerID}/${photo.imgLink}`);
-        stream.on('open', () => {
-            res.set('Content-Type', 'image/jpeg');
-            stream.pipe(res);
-        });
-        stream.on('error', () => {
-            res.set('Content-Type', 'text/plain');
-            res.status(404).end('Not found');
-        });
-    }).catch(() => {
-        res.send('not found');
-    });
-});
-
 photos.put('/upload', upload.single('file'), (req, res) => {
     const decode = jwt.verify(req.headers['authorization'], process.env.SECRET_KEY);
     console.log(req.file)
     const tempPath = req.file.path;
 
-
     const targetPath = path.join(__dirname, `../images/${decode.id}/${req.file.filename}.jpg`);
 
     if (!fs.existsSync(`./images/${decode.id}`)) {
         fs.mkdirSync(`./images/${decode.id}`);
-        res.send('created');
     }
-
 
     const photoObj = {
         imgLink: `${req.file.filename}.jpg`,
@@ -182,58 +150,71 @@ photos.get('/getSelectedPhoto/:id/:url', (req, res) => {
 photos.patch('/setImageAsFront/:id', (req, res) => {
     const decode = jwt.verify(req.header('authorization'), process.env.SECRET_KEY);
 
-    /*photo.update({
-        isFront: 0,
-    }, {
-        where: {
-            ownerID: decode.id
-        }
-    })*/
+    try {
+        photo.update({
+            isFront: 0,
+        }, {
+            where: {
+                id: +req.params.id,
+                ownerID: decode.id,
+            }
+        })
+    } catch (err) {
+        res.send(err);
+    } finally {
+        photo.update({
+            isFront: 1,
+        }, {
+            where: {
+                id: +req.params.id,
+                ownerID: decode.id
+            }
+        })
 
-    photo.update({
-        isFront: 1,
-    }, {
-        where: {
-            id: 5,
-            ownerID: decode.id
-        }
-    })
+        res.send('updated');
+    }
 
-    res.send('updated');
 });
 
 photos.patch('/setImageAsBack/:id', (req, res) => {
     const decode = jwt.verify(req.header('authorization'), process.env.SECRET_KEY);
 
-    photo.update({
-        isBackground: 0,
-    }, {
-        where: {
-            ownerID: decode.id
-        }
-    })
 
-    photo.update({
-        isBackground: 1,
-    }, {
-        where: {
-            id: +req.params.id,
-            ownerID: decode.id
-        }
-    })
+    try {
+        photo.update({
+            isBackground: 0,
+        }, {
+            where: {
+                ownerID: decode.id
+            }
+        })
+    } catch (error) {
+        res.send(error);
+    } finally {
+        photo.update({
+            isBackground: 1,
+        }, {
+            where: {
+                id: +req.params.id,
+                ownerID: decode.id
+            }
+        })
 
-    res.send('updated');
+        res.send('updated');
+    }
+
+
 });
 
 photos.get('/getUserProfile/Front/:id', (req, res) => {
     photo.findOne({
         where: {
-            isBackground: 1,
+            isFront: 1,
             ownerID: +req.params.id,
         }
     })
-        .then(photo=> {
-            if(photo) {
+        .then(photo => {
+            if (photo) {
                 res.sendFile(photo.imgLink, {root: path.join(__dirname, `../images/${req.params.id}`)});
             } else {
                 res.send('no photo')
@@ -248,8 +229,8 @@ photos.get('/getUserProfile/Back/:id', (req, res) => {
             ownerID: +req.params.id,
         }
     })
-        .then(photo=> {
-            if(photo) {
+        .then(photo => {
+            if (photo) {
                 res.sendFile(photo.imgLink, {root: path.join(__dirname, `../images/${req.params.id}`)});
             } else {
                 res.send('no photo')
