@@ -217,7 +217,7 @@ photos.get('/getUserProfile/Front/:id', (req, res) => {
             if (photo) {
                 res.sendFile(photo.imgLink, {root: path.join(__dirname, `../images/${req.params.id}`)});
             } else {
-                res.send('no photo')
+                res.sendFile('avatar_placeholder.png', {root: path.join(__dirname, `../images/default`)});
             }
         })
         .catch(res.send)
@@ -233,7 +233,7 @@ photos.get('/getUserProfile/Back/:id', (req, res) => {
             if (photo) {
                 res.sendFile(photo.imgLink, {root: path.join(__dirname, `../images/${req.params.id}`)});
             } else {
-                res.send('no photo')
+                res.sendFile('back_placeholder.jpg', {root: path.join(__dirname, `../images/default`)})
             }
         })
         .catch(res.send)
