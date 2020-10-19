@@ -10,7 +10,7 @@ const post = require('../models/PostModels/PostModel')
 
 process.env.SECRET_KEY = 'secret';
 
-posts.put('/Post', (req, res) => {
+posts.put('/Post/main', (req, res) => {
     const decode = jwt.verify(req.header('authorization'), process.env.SECRET_KEY);
 
     const postObj = {
@@ -26,9 +26,23 @@ posts.put('/Post', (req, res) => {
     }
 });
 
-posts.get('/Post', (req, res) => {
+posts.get('/userPost', (req, res) => {
+    console.log(req.query);
 
-})
+    post.findAll({
+        where: {
+            ownerID: +5,
+        },
+        order: [['created', "DESC"]],
+        offset: 0,
+        limit: 2,
+    }).then(post => {
+        res.json(post);
+    }).catch(err => {
+        res.send(err);
+    });
+
+});
 
 
 module.exports = posts;
