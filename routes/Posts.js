@@ -31,11 +31,11 @@ posts.get('/userPost', (req, res) => {
 
     post.findAll({
         where: {
-            ownerID: +5,
+            ownerID: +req.query.id,
         },
         order: [['created', "DESC"]],
-        offset: 0,
-        limit: 2,
+        offset: +req.query.skip,
+        limit: 5,
     }).then(post => {
         res.json(post);
     }).catch(err => {
@@ -43,6 +43,21 @@ posts.get('/userPost', (req, res) => {
     });
 
 });
+
+posts.get('/userPostCount', (req, res) => {
+    console.log('test');
+
+    post.count({
+        where: {
+            ownerID: 5,
+        }
+    }).then(post => {
+       res.json(post)
+    })
+
+});
+
+
 
 
 module.exports = posts;
