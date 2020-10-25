@@ -6,7 +6,8 @@ const jwt = require('jsonwebtoken');
 
 posts.use(cors());
 
-const post = require('../models/PostModels/PostModel')
+const post = require('../models/PostModels/PostModel');
+const postComments = require('../models/PostModels/PostComments');
 
 process.env.SECRET_KEY = 'secret';
 
@@ -44,20 +45,34 @@ posts.get('/userPost', (req, res) => {
 
 });
 
-posts.get('/userPostCount', (req, res) => {
-    console.log('test');
-
+posts.get('/userPost/Count', (req, res) => {
     post.count({
         where: {
-            ownerID: 5,
+            ownerID: +req.query.id,
         }
     }).then(post => {
-       res.json(post)
+        res.json(post)
     })
 
 });
 
+posts.get('/userPost/Comment', (req, res) => {
+    postComments.findOne({
+        where: {
+            postID: +req.query.postID,
+        },
+        order: [['created', 'DESC']],
+        offset: +req.query.skip,
+        limit: 1,
 
+    }).then(post => {
+        res.json(post);
+    }).catch(err => {
+        res.send(err);
+    })
+
+
+})
 
 
 module.exports = posts;
