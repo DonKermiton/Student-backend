@@ -1,3 +1,5 @@
+const Sequelize = require("sequelize");
+
 const express = require('express');
 const posts = express.Router();
 const cors = require('cors');
@@ -8,15 +10,16 @@ posts.use(cors());
 
 const post = require('../models/PostModels/PostModel');
 const postComments = require('../models/PostModels/PostComments');
+const user = require('../models/UsersModel/User');
 
 process.env.SECRET_KEY = 'secret';
 
-posts.put('/Post/main', (req, res) => {
+posts.put('/userPost/create', (req, res) => {
     const decode = jwt.verify(req.header('authorization'), process.env.SECRET_KEY);
 
     const postObj = {
         ownerID: +decode.id,
-        created: new Date().toLocaleString(),
+        created: req.body.date,
         text: req.body.text,
     }
     try {
@@ -28,12 +31,17 @@ posts.put('/Post/main', (req, res) => {
 });
 
 posts.get('/userPost', (req, res) => {
-    console.log(req.query);
+    post.belongsTo(user, {foreignKey: 'ownerID'});
+    user.hasMany(post, {foreignKey: 'ownerID'});
 
     post.findAll({
         where: {
             ownerID: +req.query.id,
         },
+        include: [{
+            model: user,
+            attributes: ['id', 'first_name', 'last_name'],
+        }],
         order: [['created', "DESC"]],
         offset: +req.query.skip,
         limit: 5,
@@ -56,23 +64,65 @@ posts.get('/userPost/Count', (req, res) => {
 
 });
 
+posts.get('/userPost/Comments/Count', (req, res) => {
+    postComments.count({
+        where: {
+            postID: +req.query.id,
+        }
+    }).then(post => {
+        res.send(post)
+    })
+});
+
+
 posts.get('/userPost/Comment', (req, res) => {
+    postComments.belongsTo(user, {foreignKey: 'ownerID'});
+    user.hasMany(postComments, {foreignKey: 'ownerID'});
+
+
     postComments.findOne({
         where: {
             postID: +req.query.postID,
         },
-        order: [['created', 'DESC']],
+        include: [{
+            model: user,
+            attributes: ['id', 'first_name', 'last_name'],
+        }],
         offset: +req.query.skip,
         limit: 1,
-
-    }).then(post => {
-        res.json(post);
-    }).catch(err => {
-        res.send(err);
-    })
+    }).then(e => res.json(e))
+        .catch(err => res.send(err));
 
 
-})
+});
+
+posts.delete('/userPost', (req, res) => {
+    const decode = jwt.verify(req.header('authorization'), process.env.SECRET_KEY);
+
+    post.delete({
+        where: {
+            postID: +req.query.id,
+            ownerID: decode.id,
+        }
+    });
+
+    res.send('deleted');
+
+});
+
+posts.get('/userPost/test', (req, res) => {
+    post.belongsTo(user, {foreignKey: 'ownerID'});
+    user.hasMany(post, {foreignKey: 'ownerID'});
+
+
+    post.findAll({
+        include: [{
+            model: user,
+            attributes: ['id', 'first_name', 'last_name'],
+        }]
+    }).then(e => res.json(e)).catch(err => res.send(err));
+
+});
 
 
 module.exports = posts;
