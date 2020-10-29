@@ -8,9 +8,12 @@ const jwt = require('jsonwebtoken');
 
 posts.use(cors());
 
+const accountType = require('../middlewares/accountType')
+const isAuth = require('../middlewares/isAuth')
 const post = require('../models/PostModels/PostModel');
 const postComments = require('../models/PostModels/PostComments');
 const user = require('../models/UsersModel/User');
+const postLikes = require('../models/PostModels/PostLikes');
 
 process.env.SECRET_KEY = 'secret';
 
@@ -34,14 +37,20 @@ posts.get('/userPost', (req, res) => {
     post.belongsTo(user, {foreignKey: 'ownerID'});
     user.hasMany(post, {foreignKey: 'ownerID'});
 
+    postComments.belongsTo(post, {foreignKey: 'postID'});
+    post.hasMany(postComments, {foreignKey: 'postID'});
+
     post.findAll({
         where: {
             ownerID: +req.query.id,
         },
-        include: [{
-            model: user,
-            attributes: ['id', 'first_name', 'last_name'],
-        }],
+        include: [
+            {
+                model: user,
+                attributes: ['id', 'first_name', 'last_name'],
+            },
+        ],
+        group: 'posts.postID',
         order: [['created', "DESC"]],
         offset: +req.query.skip,
         limit: 5,
@@ -67,12 +76,29 @@ posts.get('/userPost/Count', (req, res) => {
 posts.get('/userPost/Comments/Count', (req, res) => {
     postComments.count({
         where: {
-            postID: +req.query.id,
+            postID: req.query.id,
+        }
+    }).then(data => {
+        res.json(data)
+    }).catch(err => {
+        res.send(err)
+    })
+
+
+})
+
+posts.get('/userPost/Count', (req, res) => {
+    post.count({
+        where: {
+            ownerID: +req.query.id,
         }
     }).then(post => {
-        res.send(post)
+        res.json(post)
     })
+
 });
+
+
 
 
 posts.get('/userPost/Comment', (req, res) => {
@@ -110,19 +136,8 @@ posts.delete('/userPost', (req, res) => {
 
 });
 
-posts.get('/userPost/test', (req, res) => {
-    post.belongsTo(user, {foreignKey: 'ownerID'});
-    user.hasMany(post, {foreignKey: 'ownerID'});
-
-
-    post.findAll({
-        include: [{
-            model: user,
-            attributes: ['id', 'first_name', 'last_name'],
-        }]
-    }).then(e => res.json(e)).catch(err => res.send(err));
-
-});
-
+posts.delete(`/userPost/test`, [isAuth, accountType.isTeacher], (req, res) => {
+    res.send("auth");
+})
 
 module.exports = posts;
