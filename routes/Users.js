@@ -7,7 +7,7 @@ const fs = require('fs');
 
 
 const User = require('../models/UsersModel/User');
-
+const isAuth = require('../middlewares/isAuth');
 
 users.use(cors());
 
@@ -85,13 +85,13 @@ users.post('/login', (req, res) => {
     })
 });
 
-users.get('/profile', (req, res) => {
-    const decode = jwt.verify(req.headers['authorization'], process.env.SECRET_KEY);
+users.get('/profile', isAuth ,(req, res) => {
+    // const decode = jwt.verify(req.headers['authorization'], process.env.SECRET_KEY);
 
     User.findOne({
         attributes: ['first_name', 'last_name', 'email', 'id', 'accountType', 'group'],
         where: {
-            id: decode.id
+            id: res.locals.user.id,
         }
     }).then(user => {
         if (user) {

@@ -6,6 +6,7 @@ const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
 
+const isAuth = require('../middlewares/isAuth')
 const photoLikes = require('../models/PhotoModel/PhotoLikes')
 const photo = require('../models/PhotoModel/Photo');
 const json = require("body-parser/lib/types/json");
@@ -50,20 +51,19 @@ photos.get('/getPhoto/:userID/:photoID', (req, res) => {
     });
 });
 
-photos.put('/upload', upload.single('file'), (req, res) => {
-    const decode = jwt.verify(req.headers['authorization'], process.env.SECRET_KEY);
+photos.put('/upload', isAuth ,upload.single('file'), (req, res) => {
     console.log(req.file)
     const tempPath = req.file.path;
 
-    const targetPath = path.join(__dirname, `../images/${decode.id}/${req.file.filename}.jpg`);
+    const targetPath = path.join(__dirname, `../images/${res.locals.user.id}/${req.file.filename}.jpg`);
 
-    if (!fs.existsSync(`./images/${decode.id}`)) {
-        fs.mkdirSync(`./images/${decode.id}`);
+    if (!fs.existsSync(`./images/${res.locals.user.id}`)) {
+        fs.mkdirSync(`./images/${res.locals.user.id}`);
     }
 
     const photoObj = {
         imgLink: `${req.file.filename}.jpg`,
-        ownerID: `${decode.id}`,
+        ownerID: `${res.locals.user.id}`,
         Like: 0,
         isFront: 0,
         isBackground: 0,
@@ -102,12 +102,8 @@ photos.get('/countUserPhoto/:id', (req, res) => {
         .catch(res.send)
 });
 
-photos.delete('/delete/:url/:id', (req, res) => {
-    const decode = jwt.verify(req.header('authorization'), process.env.SECRET_KEY);
+photos.delete('/delete/:url/:id', isAuth,(req, res) => {
     const url = req.params.url;
-    if (!decode) {
-        return res.send("not Auth");
-    }
 
     photoLikes.destroy({
         where: {
@@ -117,12 +113,12 @@ photos.delete('/delete/:url/:id', (req, res) => {
 
     photo.destroy({
         where: {
-            ownerID: decode.id,
+            ownerID: res.locals.user.id,
             imgLink: url,
         }
     })
 
-    fs.unlink(`./images/${decode.id}/${url}`, (err) => {
+    fs.unlink(`./images/${res.locals.user.id}/${url}`, (err) => {
         if (err) console.log(err);
     });
 
@@ -147,16 +143,14 @@ photos.get('/getSelectedPhoto/:id/:url', (req, res) => {
     res.sendFile(req.params.url, {root: path.join(__dirname, `../images/${req.params.id}`)});
 });
 
-photos.patch('/setImageAsFront/:id', (req, res) => {
-    const decode = jwt.verify(req.header('authorization'), process.env.SECRET_KEY);
-
+photos.patch('/setImageAsFront/:id',isAuth , (req, res) => {
     try {
         photo.update({
             isFront: 0,
         }, {
             where: {
                 id: +req.params.id,
-                ownerID: decode.id,
+                ownerID: res.locals.user.id,
             }
         })
     } catch (err) {
@@ -167,7 +161,7 @@ photos.patch('/setImageAsFront/:id', (req, res) => {
         }, {
             where: {
                 id: +req.params.id,
-                ownerID: decode.id
+                ownerID: res.locals.user.id
             }
         })
 
@@ -176,8 +170,8 @@ photos.patch('/setImageAsFront/:id', (req, res) => {
 
 });
 
-photos.patch('/setImageAsBack/:id', (req, res) => {
-    const decode = jwt.verify(req.header('authorization'), process.env.SECRET_KEY);
+photos.patch('/setImageAsBack/:id', isAuth ,(req, res) => {
+
 
 
     try {
@@ -185,7 +179,7 @@ photos.patch('/setImageAsBack/:id', (req, res) => {
             isBackground: 0,
         }, {
             where: {
-                ownerID: decode.id
+                ownerID: res.locals.user.id
             }
         })
     } catch (error) {
@@ -196,7 +190,7 @@ photos.patch('/setImageAsBack/:id', (req, res) => {
         }, {
             where: {
                 id: +req.params.id,
-                ownerID: decode.id
+                ownerID: res.locals.user.id,
             }
         })
 

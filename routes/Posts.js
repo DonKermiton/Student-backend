@@ -122,13 +122,12 @@ posts.get('/userPost/Comment', (req, res) => {
 
 });
 
-posts.delete('/userPost', (req, res) => {
-    const decode = jwt.verify(req.header('authorization'), process.env.SECRET_KEY);
+posts.delete('/userPost', isAuth,(req, res) => {
 
     post.delete({
         where: {
             postID: +req.query.id,
-            ownerID: decode.id,
+            ownerID: req.locals.user.id,
         }
     });
 
