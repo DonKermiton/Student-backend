@@ -135,7 +135,7 @@ posts.delete('/userPost', isAuth,(req, res) => {
 
 });
 
-posts.delete(`/userPost/test`, [isAuth, accountType.isTeacher], (req, res) => {
+posts.delete(`/userPost/test`, [isAuth, accountType.isStudent], (req, res) => {
     res.send("auth");
 })
 
