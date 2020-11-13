@@ -6,6 +6,7 @@ const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
 
+const users = require('../models/UsersModel/User');
 const isAuth = require('../middlewares/isAuth')
 const photoLikes = require('../models/PhotoModel/PhotoLikes')
 const photo = require('../models/PhotoModel/Photo');
@@ -51,7 +52,7 @@ photos.get('/getPhoto/:userID/:photoID', (req, res) => {
     });
 });
 
-photos.put('/upload', isAuth ,upload.single('file'), (req, res) => {
+photos.put('/upload', isAuth, upload.single('file'), (req, res) => {
     console.log(req.file)
     const tempPath = req.file.path;
 
@@ -102,7 +103,7 @@ photos.get('/countUserPhoto/:id', (req, res) => {
         .catch(res.send)
 });
 
-photos.delete('/delete/:url/:id', isAuth,(req, res) => {
+photos.delete('/delete/:url/:id', isAuth, (req, res) => {
     const url = req.params.url;
 
     photoLikes.destroy({
@@ -143,7 +144,7 @@ photos.get('/getSelectedPhoto/:id/:url', (req, res) => {
     res.sendFile(req.params.url, {root: path.join(__dirname, `../images/${req.params.id}`)});
 });
 
-photos.patch('/setImageAsFront/:id',isAuth , (req, res) => {
+photos.patch('/setImageAsFront/:id', isAuth, (req, res) => {
     try {
         photo.update({
             isFront: 0,
@@ -170,8 +171,7 @@ photos.patch('/setImageAsFront/:id',isAuth , (req, res) => {
 
 });
 
-photos.patch('/setImageAsBack/:id', isAuth ,(req, res) => {
-
+photos.patch('/setImageAsBack/:id', isAuth, (req, res) => {
 
 
     try {
@@ -231,8 +231,30 @@ photos.get('/getUserProfile/Back/:id', (req, res) => {
             }
         })
         .catch(res.send)
-})
+});
+
+photos.get('/getPhotoWithUser', (req, res) => {
+    photo.findOne({
+        where: {
+            imgLink: req.query.id
+        }
+    }).then(photo => {
+        res.sendFile(photo.imgLink, {root: path.join(__dirname, `../images/${photo.ownerID}`)});
+    });
 
 
-module.exports = photos;
+});
+
+photos.get('/getPhotoCredentials', (req, res) => {
+
+    photo.findOne({
+        where: {
+            imgLink: req.query.id,
+        },
+    }).then(post => {
+        res.json(post);
+    });
+
+});
+module.exports = photos
 
