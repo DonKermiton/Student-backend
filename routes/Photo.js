@@ -7,8 +7,9 @@ const fs = require('fs');
 const multer = require('multer');
 
 const users = require('../models/UsersModel/User');
-const isAuth = require('../middlewares/isAuth')
-const photoLikes = require('../models/PhotoModel/PhotoLikes')
+const isAuth = require('../middlewares/isAuth');
+const filPhoto = require('../models/PostModels/post-photo-dic');
+
 const photo = require('../models/PhotoModel/Photo');
 const json = require("body-parser/lib/types/json");
 
@@ -65,13 +66,19 @@ photos.put('/upload', isAuth, upload.single('file'), (req, res) => {
     const photoObj = {
         imgLink: `${req.file.filename}.jpg`,
         ownerID: `${res.locals.user.id}`,
+        postID: req.header('postID'),
         Like: 0,
         isFront: 0,
         isBackground: 0,
         Date: new Date().getTimezoneOffset(),
     };
-
-    photo.create(photoObj);
+    
+    photo.create(photoObj).then((data) => {
+        filPhoto.create({
+            postID: req.header('postID'),
+            photoID: data.dataValues.id,
+        })
+    });
 
     if (path.extname(req.file.originalname).toLowerCase() === ".png" || path.extname(req.file.originalname).toLowerCase() === ".jpg") {
         fs.rename(tempPath, targetPath, err => {
@@ -96,21 +103,17 @@ photos.put('/upload', isAuth, upload.single('file'), (req, res) => {
 
 photos.get('/countUserPhoto/:id', (req, res) => {
     photo.count({
-        where: {
-            ownerID: req.params.id
-        }
-    }).then(number => res.json(number))
+            where: {
+                ownerID: req.params.id
+            }
+        }).then(number => res.json(number))
         .catch(res.send)
 });
 
 photos.delete('/delete/:url/:id', isAuth, (req, res) => {
     const url = req.params.url;
 
-    photoLikes.destroy({
-        where: {
-            id: req.params.id,
-        }
-    })
+ 
 
     photo.destroy({
         where: {
@@ -132,7 +135,9 @@ photos.get('/getPhotoCollectionInfo/:limit/:id', (req, res) => {
         where: {
             ownerID: +req.params.id,
         },
-        order: [['Date', "DESC"]],
+        order: [
+            ['Date', "DESC"]
+        ],
         limit: +req.params.limit
     }).then(photo => {
         res.json(photo);
@@ -141,7 +146,9 @@ photos.get('/getPhotoCollectionInfo/:limit/:id', (req, res) => {
 });
 
 photos.get('/getSelectedPhoto/:id/:url', (req, res) => {
-    res.sendFile(req.params.url, {root: path.join(__dirname, `../images/${req.params.id}`)});
+    res.sendFile(req.params.url, {
+        root: path.join(__dirname, `../images/${req.params.id}`)
+    });
 });
 
 photos.patch('/setImageAsFront/:id', isAuth, (req, res) => {
@@ -202,32 +209,40 @@ photos.patch('/setImageAsBack/:id', isAuth, (req, res) => {
 
 photos.get('/getUserProfile/Front/:id', (req, res) => {
     photo.findOne({
-        where: {
-            isFront: 1,
-            ownerID: +req.params.id,
-        }
-    })
+            where: {
+                isFront: 1,
+                ownerID: +req.params.id,
+            }
+        })
         .then(photo => {
             if (photo) {
-                res.sendFile(photo.imgLink, {root: path.join(__dirname, `../images/${req.params.id}`)});
+                res.sendFile(photo.imgLink, {
+                    root: path.join(__dirname, `../images/${req.params.id}`)
+                });
             } else {
-                res.sendFile('avatar_placeholder.png', {root: path.join(__dirname, `../images/default`)});
+                res.sendFile('avatar_placeholder.png', {
+                    root: path.join(__dirname, `../images/default`)
+                });
             }
         })
         .catch(res.send)
 })
 photos.get('/getUserProfile/Back/:id', (req, res) => {
     photo.findOne({
-        where: {
-            isBackground: 1,
-            ownerID: +req.params.id,
-        }
-    })
+            where: {
+                isBackground: 1,
+                ownerID: +req.params.id,
+            }
+        })
         .then(photo => {
             if (photo) {
-                res.sendFile(photo.imgLink, {root: path.join(__dirname, `../images/${req.params.id}`)});
+                res.sendFile(photo.imgLink, {
+                    root: path.join(__dirname, `../images/${req.params.id}`)
+                });
             } else {
-                res.sendFile('back_placeholder.jpg', {root: path.join(__dirname, `../images/default`)})
+                res.sendFile('back_placeholder.jpg', {
+                    root: path.join(__dirname, `../images/default`)
+                })
             }
         })
         .catch(res.send)
@@ -239,7 +254,9 @@ photos.get('/getPhotoWithUser', (req, res) => {
             imgLink: req.query.id
         }
     }).then(photo => {
-        res.sendFile(photo.imgLink, {root: path.join(__dirname, `../images/${photo.ownerID}`)});
+        res.sendFile(photo.imgLink, {
+            root: path.join(__dirname, `../images/${photo.ownerID}`)
+        });
     });
 
 
@@ -257,4 +274,3 @@ photos.get('/getPhotoCredentials', (req, res) => {
 
 });
 module.exports = photos
-

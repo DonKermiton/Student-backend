@@ -14,20 +14,21 @@ const post = require('../models/PostModels/PostModel');
 const postComments = require('../models/PostModels/PostComments');
 const user = require('../models/UsersModel/User');
 const postLikes = require('../models/PostModels/PostLikes');
+const postPhotoDic = require('../models/PostModels/post-photo-dic')
 
 process.env.SECRET_KEY = 'secret';
 
-posts.put('/userPost/create', (req, res) => {
-    const decode = jwt.verify(req.header('authorization'), process.env.SECRET_KEY);
-
+posts.put('/userPost/create', isAuth ,(req, res) => {
+    console.log(req.body);
     const postObj = {
-        ownerID: +decode.id,
-        created: req.body.date,
+        ownerID: +res.locals.user.id,
+        created: new Date(),
         text: req.body.text,
     }
     try {
-        post.create(postObj);
-        res.send('created');
+        post.create(postObj).then(data => {
+            res.json(data);
+        });
     } catch (err) {
         res.send(err);
     }
