@@ -35,7 +35,7 @@ const mime = {
 };
 
 
-photos.get('/getPhoto/:userID/:photoID', (req, res) => {
+photos.get('/getPhoto/:userID/:photoID', isAuth,(req, res) => {
     const userDir = req.params.userID;
     const photoID = req.params.photoID;
     const file = path.join(__dirname, `../images/${userDir}/${photoID}`);
@@ -72,7 +72,7 @@ photos.put('/upload', isAuth, upload.single('file'), (req, res) => {
         isBackground: 0,
         Date: new Date().getTimezoneOffset(),
     };
-    
+
     photo.create(photoObj).then((data) => {
         filPhoto.create({
             postID: req.header('postID'),
@@ -103,31 +103,66 @@ photos.put('/upload', isAuth, upload.single('file'), (req, res) => {
 
 photos.get('/countUserPhoto/:id', (req, res) => {
     photo.count({
-            where: {
-                ownerID: req.params.id
-            }
-        }).then(number => res.json(number))
+        where: {
+            ownerID: req.params.id
+        }
+    }).then(number => res.json(number))
         .catch(res.send)
 });
 
 photos.delete('/delete/:url/:id', isAuth, (req, res) => {
     const url = req.params.url;
+    console.log(url);
 
- 
 
-    photo.destroy({
-        where: {
-            ownerID: res.locals.user.id,
-            imgLink: url,
-        }
-    })
+    try {
+        photo.findOne({
+            where: {
+                ownerID: res.locals.user.id,
+                imgLink: url,
+            },
+        }).then(data => {
+            return data.dataValues.id
+        }).then(photoID => {
+            filPhoto.destroy({
+                where: {
+                    photoID: photoID,
+                },
 
-    fs.unlink(`./images/${res.locals.user.id}/${url}`, (err) => {
-        if (err) console.log(err);
-    });
+            })
+        }).then(() => {
+            photo.destroy({
+                where: {
+                    ownerID: res.locals.user.id,
+                    imgLink: url,
+                },
 
-    res.send('deleted');
+            })
+        })
+        fs.unlink(`./images/${res.locals.user.id}/${url}`, (err) => {
+            if (err) console.log(err);
+        });
+
+        res.send('deleted');
+    }
+    catch (err) {
+        return res.send(err);
+    }
+
 });
+
+photos.get('/post/collection', (req, res) => {
+    photo.findAll({
+        where: {
+            postID: +req.query.postID,
+        }
+    }).then(photo => {
+        res.json(photo);
+    });
+});
+
+
+
 
 photos.get('/getPhotoCollectionInfo/:limit/:id', (req, res) => {
 
@@ -209,11 +244,11 @@ photos.patch('/setImageAsBack/:id', isAuth, (req, res) => {
 
 photos.get('/getUserProfile/Front/:id', (req, res) => {
     photo.findOne({
-            where: {
-                isFront: 1,
-                ownerID: +req.params.id,
-            }
-        })
+        where: {
+            isFront: 1,
+            ownerID: +req.params.id,
+        }
+    })
         .then(photo => {
             if (photo) {
                 res.sendFile(photo.imgLink, {
@@ -229,11 +264,11 @@ photos.get('/getUserProfile/Front/:id', (req, res) => {
 })
 photos.get('/getUserProfile/Back/:id', (req, res) => {
     photo.findOne({
-            where: {
-                isBackground: 1,
-                ownerID: +req.params.id,
-            }
-        })
+        where: {
+            isBackground: 1,
+            ownerID: +req.params.id,
+        }
+    })
         .then(photo => {
             if (photo) {
                 res.sendFile(photo.imgLink, {
@@ -249,6 +284,7 @@ photos.get('/getUserProfile/Back/:id', (req, res) => {
 });
 
 photos.get('/getPhotoWithUser', (req, res) => {
+
     photo.findOne({
         where: {
             imgLink: req.query.id

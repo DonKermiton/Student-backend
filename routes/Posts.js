@@ -18,7 +18,7 @@ const postPhotoDic = require('../models/PostModels/post-photo-dic')
 
 process.env.SECRET_KEY = 'secret';
 
-posts.put('/userPost/create', isAuth ,(req, res) => {
+posts.put('/userPost/create', isAuth, (req, res) => {
     console.log(req.body);
     const postObj = {
         ownerID: +res.locals.user.id,
@@ -32,6 +32,18 @@ posts.put('/userPost/create', isAuth ,(req, res) => {
     } catch (err) {
         res.send(err);
     }
+});
+
+posts.put('/userPost/comment/create',isAuth, (req, res) => {
+    const obj = {
+        postID: req.query.id,
+        ownerID: res.locals.user.id,
+        text: req.query.text,
+        created: new Date(),
+    }
+    postComments.create(obj).then(data => {
+        res.send('created');
+    })
 });
 
 posts.get('/userPost', (req, res) => {
@@ -55,6 +67,32 @@ posts.get('/userPost', (req, res) => {
         order: [['created', "DESC"]],
         offset: +req.query.skip,
         limit: 5,
+    }).then(post => {
+        res.json(post);
+    }).catch(err => {
+        res.send(err);
+    });
+
+});
+
+posts.get('/userPost/single', (req, res) => {
+    post.belongsTo(user, {foreignKey: 'ownerID'});
+    user.hasMany(post, {foreignKey: 'ownerID'});
+
+    postComments.belongsTo(post, {foreignKey: 'postID'});
+    post.hasMany(postComments, {foreignKey: 'postID'});
+
+    post.findOne({
+        where: {
+            postID: +req.query.id
+        },
+        include: [
+            {
+                model: user,
+                attributes: ['id', 'first_name', 'last_name'],
+            },
+        ],
+        group: 'posts.postID',
     }).then(post => {
         res.json(post);
     }).catch(err => {
@@ -100,8 +138,6 @@ posts.get('/userPost/Count', (req, res) => {
 });
 
 
-
-
 posts.get('/userPost/Comment', (req, res) => {
     postComments.belongsTo(user, {foreignKey: 'ownerID'});
     user.hasMany(postComments, {foreignKey: 'ownerID'});
@@ -123,7 +159,27 @@ posts.get('/userPost/Comment', (req, res) => {
 
 });
 
-posts.delete('/userPost', isAuth,(req, res) => {
+posts.get('/userPost/Comment/all', (req, res) => {
+    postComments.belongsTo(user, {foreignKey: 'ownerID'});
+    user.hasMany(postComments, {foreignKey: 'ownerID'});
+
+
+    postComments.findAll({
+        where: {
+            postID: +req.query.postID,
+        },
+        include: [{
+            model: user,
+            attributes: ['id', 'first_name', 'last_name'],
+        }],
+    }).then(e => res.json(e))
+        .catch(err => res.send(err));
+
+
+});
+
+
+posts.delete('/userPost', isAuth, (req, res) => {
 
     post.delete({
         where: {
