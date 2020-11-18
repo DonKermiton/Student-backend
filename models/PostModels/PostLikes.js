@@ -10,7 +10,7 @@ module.exports = db.sequelize.define(
         },
         userID: {
             type: Sequelize.INTEGER,
-        }
+        },
     },
     {
         timestamps: false,
