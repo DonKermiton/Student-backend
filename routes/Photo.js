@@ -12,6 +12,8 @@ const filPhoto = require('../models/PostModels/post-photo-dic');
 
 const photo = require('../models/PhotoModel/Photo');
 const json = require("body-parser/lib/types/json");
+const storage = require("../middlewares/storage");
+const getSize = require('get-folder-size');
 
 photos.use(cors());
 
@@ -35,7 +37,7 @@ const mime = {
 };
 
 
-photos.get('/getPhoto/:userID/:photoID', isAuth,(req, res) => {
+photos.get('/getPhoto/:userID/:photoID', isAuth, (req, res) => {
     const userDir = req.params.userID;
     const photoID = req.params.photoID;
     const file = path.join(__dirname, `../images/${userDir}/${photoID}`);
@@ -54,51 +56,62 @@ photos.get('/getPhoto/:userID/:photoID', isAuth,(req, res) => {
 });
 
 photos.put('/upload', isAuth, upload.single('file'), (req, res) => {
-    console.log(req.file)
-    const tempPath = req.file.path;
+    console.log(req.file);
+    getSize(`images/${res.locals.user.id}`, (err, dirSize) => {
+        // sumFile return value in MB
+        const sumFile = ((dirSize + req.file.size) / 1024 / 1024);
+        const allowSized = ((5 * 1000 * 1000 * 1000) / 1024 / 1024);
 
-    const targetPath = path.join(__dirname, `../images/${res.locals.user.id}/${req.file.filename}.jpg`);
+        if (sumFile > allowSized ) {
+            res.send('no enough free space')
+            return;
+        }
 
-    if (!fs.existsSync(`./images/${res.locals.user.id}`)) {
-        fs.mkdirSync(`./images/${res.locals.user.id}`);
-    }
+        const tempPath = req.file.path;
 
-    const photoObj = {
-        imgLink: `${req.file.filename}.jpg`,
-        ownerID: `${res.locals.user.id}`,
-        postID: req.header('postID'),
-        Like: 0,
-        isFront: 0,
-        isBackground: 0,
-        Date: new Date().getTimezoneOffset(),
-    };
+        const targetPath = path.join(__dirname, `../images/${res.locals.user.id}/${req.file.filename}.jpg`);
 
-    photo.create(photoObj).then((data) => {
-        filPhoto.create({
+        if (!fs.existsSync(`./images/${res.locals.user.id}`)) {
+            fs.mkdirSync(`./images/${res.locals.user.id}`);
+        }
+
+        const photoObj = {
+            imgLink: `${req.file.filename}.jpg`,
+            ownerID: `${res.locals.user.id}`,
             postID: req.header('postID'),
-            photoID: data.dataValues.id,
-        })
-    });
+            Like: 0,
+            isFront: 0,
+            isBackground: 0,
+            Date: new Date().getTimezoneOffset(),
+        };
 
-    if (path.extname(req.file.originalname).toLowerCase() === ".png" || path.extname(req.file.originalname).toLowerCase() === ".jpg") {
-        fs.rename(tempPath, targetPath, err => {
-            if (err) return console.log(err)
-
-            res
-                .status(200)
-                .contentType("text/plain")
-                .end("File uploaded!");
+        photo.create(photoObj).then((data) => {
+            filPhoto.create({
+                postID: req.header('postID'),
+                photoID: data.dataValues.id,
+            })
         });
-    } else {
-        fs.unlink(tempPath, err => {
-            if (err) return console.log(err, res);
 
-            res
-                .status(403)
-                .contentType("text/plain")
-                .end("Only .png files are allowed!");
-        });
-    }
+        if (path.extname(req.file.originalname).toLowerCase() === ".png" || path.extname(req.file.originalname).toLowerCase() === ".jpg") {
+            fs.rename(tempPath, targetPath, err => {
+                if (err) return console.log(err)
+
+                res
+                    .status(200)
+                    .contentType("text/plain")
+                    .end("File uploaded!");
+            });
+        } else {
+            fs.unlink(tempPath, err => {
+                if (err) return console.log(err, res);
+
+                res
+                    .status(403)
+                    .contentType("text/plain")
+                    .end("Only .png files are allowed!");
+            });
+        }
+    })
 });
 
 photos.get('/countUserPhoto/:id', (req, res) => {
@@ -144,8 +157,7 @@ photos.delete('/delete/:url/:id', isAuth, (req, res) => {
         });
 
         res.send('deleted');
-    }
-    catch (err) {
+    } catch (err) {
         return res.send(err);
     }
 
@@ -160,8 +172,6 @@ photos.get('/post/collection', (req, res) => {
         res.json(photo);
     });
 });
-
-
 
 
 photos.get('/getPhotoCollectionInfo/:limit/:id', (req, res) => {

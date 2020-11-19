@@ -13,6 +13,7 @@ const isAuth = require('../middlewares/isAuth')
 const post = require('../models/PostModels/PostModel');
 const postComments = require('../models/PostModels/PostComments');
 const user = require('../models/UsersModel/User');
+const photo = require('../models/PhotoModel/Photo')
 
 const postPhotoDic = require('../models/PostModels/post-photo-dic');
 const getSize = require('get-folder-size');
@@ -26,7 +27,7 @@ posts.get('/userPost/size', (req, res) => {
         // fs.readdirSync('images/5').forEach(file => {
         //     console.log(file);
         // });
-        const p = "./images/5"
+        const p = "./images/5";
         fs.readdir(p, function (err, files) {
             if (err) {
                 throw err;
@@ -228,12 +229,6 @@ posts.get('/userPost/Comment/all', (req, res) => {
 
 posts.delete('/userPost', isAuth, (req, res) => {
 
-    post.delete({
-        where: {
-            postID: +req.query.id,
-            ownerID: req.locals.user.id,
-        }
-    });
 
     res.send('deleted');
 

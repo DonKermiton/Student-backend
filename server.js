@@ -12,10 +12,12 @@ app.use(bodyParser.urlencoded({ extended: true }));
 const Users = require('./routes/Users');
 const Photos = require('./routes/Photo');
 const Posts = require('./routes/Posts');
+const Storage = require('./routes/storage');
 
 app.use('/api/users', Users);
 app.use('/api/photo', Photos);
 app.use('/api/posts', Posts);
+app.use('/api/storage', Storage);
 
 app.listen(port, () => {
     console.log(`server is running on port ${port}`);
