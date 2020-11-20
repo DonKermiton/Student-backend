@@ -8,6 +8,7 @@ const fs = require('fs');
 const multer = require("multer");
 
 const getSize = require('get-folder-size');
+const rimraf = require('rimraf');
 
 const upload = multer({
     dest: "../storage"
@@ -31,6 +32,7 @@ const mime = {
 };
 
 storage.get('/space', isAuth, (req, res) => {
+    // get space occupied
     if (!fs.existsSync(`./storage/${res.locals.user.id}`)) {
         fs.mkdirSync(`./storage/${res.locals.user.id}`);
     }
@@ -41,8 +43,6 @@ storage.get('/space', isAuth, (req, res) => {
 });
 
 storage.put('/space', isAuth, upload.single('file'), (req, res) => {
-
-
     getSize(`images/${res.locals.user.id}`, (err, dirSize) => {
 
         if (err) return res.status(403).send({
@@ -59,8 +59,26 @@ storage.put('/space', isAuth, upload.single('file'), (req, res) => {
         console.log(req.file);
         const tempPath = req.file.path;
 
-        const targetPath = path.join(__dirname, `../storage/${res.locals.user.id}/${req.file.filename}`);
 
+        let fileMimeExt;
+
+        // get extension
+        for (let i in mime) {
+            if (req.file.mimetype === mime[i]) {
+                fileMimeExt = Object.keys(mime).find(key => mime[key] === mime[i]);
+                break;
+            }
+        }
+
+        if (!fileMimeExt) {
+            return res.status(403).send({
+                message: `${res.file.mimetype} is forbidden`
+            });
+        }
+
+        const targetPath = path.join(__dirname, `../storage/${res.locals.user.id}/${req.file.filename}.${fileMimeExt}`);
+
+        // rename file
         fs.rename(tempPath, targetPath, err1 => {
             if (err1) return res.status(403).send({
                 message: err1
@@ -72,5 +90,46 @@ storage.put('/space', isAuth, upload.single('file'), (req, res) => {
     })
 
 });
+
+storage.put('/space/dir', (req, res) => {
+    // create dir
+    fs.mkdir(`./storage/${req.body.dir}`, (err => {
+        if (err) return res.send(err);
+
+        res.send('success');
+    }));
+
+});
+
+storage.delete('/space/file', (req, res) => {
+    if (req.body.type === 'dir') {
+        if(req.body.force === true){
+            rimraf(`./storage/${req.body.name}`, (err) => {
+               if(err) return res.send(err);
+               res.send('success');
+            });
+        }
+        fs.rmdir(`./storage/${req.body.name}`, err => {
+            if (err) {
+                return res.send(err);
+            }
+            res.send('success');
+        })
+    } else if (req.body.type === 'file') {
+        fs.unlink(`./storage/${req.body.name}`, (err) => {
+            if(err) return res.send(err);
+            res.send('success');
+        })
+    }
+});
+
+storage.get('/space/user',(req, res) => {
+    const filesArray =[]
+    const url = './storage/5'
+    fs.readdir(url, (err, files) => {
+
+    });
+});
+
 
 module.exports = storage;
