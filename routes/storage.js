@@ -29,6 +29,7 @@ const mime = {
     tar: 'application/x-tar',
     xls: 'application/vnd.ms-excel',
     zip: 'application/zip',
+    pdf: 'application/pdf'
 };
 
 storage.get('/space', isAuth, (req, res) => {
@@ -76,7 +77,7 @@ storage.put('/space', isAuth, upload.single('file'), (req, res) => {
             });
         }
 
-        const targetPath = path.join(__dirname, `../storage/${res.locals.user.id}/${req.file.filename}.${fileMimeExt}`);
+        const targetPath = path.join(__dirname, `../storage/${res.locals.user.id}/${req.file.originalname}.${fileMimeExt}`);
 
         // rename file
         fs.rename(tempPath, targetPath, err1 => {
@@ -123,13 +124,20 @@ storage.delete('/space/file', (req, res) => {
     }
 });
 
-storage.get('/space/user',(req, res) => {
-    const filesArray =[]
+storage.get('/space/files',(req, res) => {
+    const filesArray =[];
+    // todo change
     const url = './storage/5'
-    fs.readdir(url, (err, files) => {
+    fs.readdirSync(url, {withFileTypes: true}).map(file => {
+        if(file.isDirectory()) {
+            filesArray.unshift({name: file.name, isDir: true})
+        } else {
+            filesArray.push({name: file.name, isDir: false});
+        }
+    })
 
-    });
+    res.json(filesArray);
 });
 
-
 module.exports = storage;
+
