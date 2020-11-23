@@ -39,7 +39,7 @@ storage.get('/space', isAuth, (req, res) => {
     }
     getSize(`storage/${res.locals.user.id}`, (err, size) => {
         const sizeToMB = (size / 1024 / 1024).toFixed(2);
-        res.json({size: sizeToMB})
+        res.send(sizeToMB);
     })
 });
 
@@ -103,21 +103,22 @@ storage.put('/space/dir', (req, res) => {
 });
 
 storage.delete('/space/file', (req, res) => {
-    if (req.body.type === 'dir') {
-        if(req.body.force === true){
-            rimraf(`./storage/${req.body.name}`, (err) => {
+    if (req.query.type === 'dir') {
+        if(req.query.force === 'true'){
+            rimraf(`./storage/${req.query.name}`, (err) => {
                if(err) return res.send(err);
                res.send('success');
             });
+        } else {
+            fs.rmdir(`./storage/${req.query.name}`, err => {
+                if (err) {
+                    return res.send(err);
+                }
+                res.send('success');
+            })
         }
-        fs.rmdir(`./storage/${req.body.name}`, err => {
-            if (err) {
-                return res.send(err);
-            }
-            res.send('success');
-        })
-    } else if (req.body.type === 'file') {
-        fs.unlink(`./storage/${req.body.name}`, (err) => {
+    } else if (req.query.type === 'file') {
+        fs.unlink(`./storage/${req.query.name}`, (err) => {
             if(err) return res.send(err);
             res.send('success');
         })
@@ -125,18 +126,28 @@ storage.delete('/space/file', (req, res) => {
 });
 
 storage.get('/space/files',(req, res) => {
-    const filesArray =[];
+    const dirArray =[]
+    const filesArray = [];
+
     // todo change
-    const url = './storage/5'
+    const url = `./storage/${req.query.url}`
     fs.readdirSync(url, {withFileTypes: true}).map(file => {
         if(file.isDirectory()) {
-            filesArray.unshift({name: file.name, isDir: true})
+            dirArray.unshift({name: file.name, isDir: true})
         } else {
             filesArray.push({name: file.name, isDir: false});
         }
     })
+    dirArray.sort((a, b) => {
+        return a.name.localeCompare(b.name)
+    })
+    filesArray.sort((a, b) => {
+        return a.name.localeCompare(b.name)
+    })
 
-    res.json(filesArray);
+    const files = dirArray.concat(filesArray);
+
+    res.json(files);
 });
 
 module.exports = storage;
