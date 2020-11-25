@@ -49,6 +49,7 @@ storage.put('/space', isAuth, upload.single('file'), (req, res) => {
         if (err) return res.status(403).send({
             message: err
         });
+
         // sumFile return value in MB
         const sumFile = ((dirSize + req.file.size) / 1024 / 1024);
         const allowSized = ((5 * 1000 * 1000 * 1000) / 1024 / 1024);
@@ -71,12 +72,16 @@ storage.put('/space', isAuth, upload.single('file'), (req, res) => {
 
         if (!fileMimeExt) {
             return res.status(403).send({
-                message: `${res.file.mimetype} is forbidden`
+                message: `type is forbidden`
             });
         }
-
-        const targetPath = path.join(__dirname, `../storage/${req.header('activePath')}/${req.file.originalname}.${fileMimeExt}`);
-
+        let targetPath
+        console.log(path.extname(req.file.originalname));
+        if (!path.extname(req.file.originalname)) {
+             targetPath = path.join(__dirname, `../storage/${req.header('activePath')}/${req.file.originalname}.${fileMimeExt}`);
+        } else {
+             targetPath = path.join(__dirname, `../storage/${req.header('activePath')}/${req.file.originalname}`);
+        }
         // rename file
         fs.rename(tempPath, targetPath, err1 => {
             if (err1) return res.status(403).send({
