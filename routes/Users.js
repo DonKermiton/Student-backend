@@ -4,14 +4,13 @@ const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const fs = require('fs');
-
+process.env.SECRET_KEY = 'secret';
 
 const User = require('../models/UsersModel/User');
-
+const isAuth = require('../middlewares/isAuth');
 
 users.use(cors());
 
-process.env.SECRET_KEY = 'secret';
 const saltRound = 10;
 
 users.post('/register', (req, res) => {
@@ -33,7 +32,7 @@ users.post('/register', (req, res) => {
     })
         .then(user => {
             if (!user) {
-                bcrypt.genSalt(saltRound,  (err, salt) => {
+                bcrypt.genSalt(saltRound, (err, salt) => {
                     bcrypt.hash(req.body.password, salt, (err, hash) => {
                         userData.password = hash;
                         User.create(userData)
@@ -72,6 +71,7 @@ users.post('/login', (req, res) => {
                 if (result) {
                     let token = jwt.sign(user.dataValues, process.env.SECRET_KEY)
                     console.log(token);
+
                     res.json({token: token});
                 } else {
                     res.send('wrong password');
@@ -85,13 +85,13 @@ users.post('/login', (req, res) => {
     })
 });
 
-users.get('/profile', (req, res) => {
-    const decode = jwt.verify(req.headers['authorization'], process.env.SECRET_KEY);
+users.get('/profile', isAuth, (req, res) => {
+    // const decode = jwt.verify(req.headers['authorization'], process.env.SECRET_KEY);
 
     User.findOne({
-        attributes: ['first_name', 'last_name', 'email', 'id', 'accountType', 'photo'],
+        attributes: ['first_name', 'last_name', 'email', 'id', 'accountType', 'group'],
         where: {
-            id: decode.id
+            id: res.locals.user.id,
         }
     }).then(user => {
         if (user) {
@@ -108,7 +108,7 @@ users.get('/profile/:id', (req, res) => {
     const id = req.params.id;
 
     User.findOne({
-        attributes: ['first_name', 'last_name', 'email', 'id', 'accountType', 'photo'],
+        attributes: ['first_name', 'last_name', 'email', 'id', 'accountType', 'group'],
         where: {
             id: id,
         }
@@ -122,5 +122,7 @@ users.get('/profile/:id', (req, res) => {
         res.send('error' + err);
     })
 });
+
+
 
 module.exports = users;

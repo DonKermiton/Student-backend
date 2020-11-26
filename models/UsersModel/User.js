@@ -2,7 +2,7 @@ const Sequelize = require('sequelize');
 const db = require('../../database/db');
 
 module.exports = db.sequelize.define(
-    'Users',
+    'users',
     {
         id: {
             type: Sequelize.INTEGER,
@@ -27,7 +27,7 @@ module.exports = db.sequelize.define(
         accountType: {
             type: Sequelize.INTEGER,
         },
-        photo: {
+        group: {
             type: Sequelize.STRING
         }
     },

@@ -15,8 +15,11 @@ module.exports = db.sequelize.define(
         ownerID: {
             type: Sequelize.INTEGER,
         },
-        Like: {
+        postID: {
             type: Sequelize.INTEGER,
+        },
+        Date: {
+            type: Sequelize.DATE,
         },
         isFront: {
             type: Sequelize.INTEGER,

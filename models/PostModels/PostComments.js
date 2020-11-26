@@ -2,14 +2,20 @@ const Sequelize = require('sequelize');
 const db = require('../../database/db');
 
 module.exports = db.sequelize.define(
-    "PhotoLikes",
+    "postcomments",
     {
-        PhotoID: {
+        postID: {
             type: Sequelize.INTEGER,
-            primaryKey: true,
+            primaryKey: true
         },
-        UserID: {
+        ownerID: {
             type: Sequelize.INTEGER,
+        },
+        text: {
+            type: Sequelize.STRING,
+        },
+        created: {
+            type: Sequelize.DATE,
         }
     },
     {
