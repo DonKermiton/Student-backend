@@ -96,7 +96,7 @@ posts.put('/userPost/comment/create',isAuth, (req, res) => {
     })
 });
 
-posts.get('/userPost', (req, res) => {
+posts.get('/userPost/selected', (req, res) => {
     post.belongsTo(user, {foreignKey: 'ownerID'});
     user.hasMany(post, {foreignKey: 'ownerID'});
 
@@ -106,6 +106,34 @@ posts.get('/userPost', (req, res) => {
     post.findAll({
         where: {
             ownerID: +req.query.id,
+        },
+        include: [
+            {
+                model: user,
+                attributes: ['id', 'first_name', 'last_name'],
+            },
+        ],
+        group: 'posts.postID',
+        order: [['created', "DESC"]],
+        offset: +req.query.skip,
+        limit: 5,
+    }).then(post => {
+        res.json(post);
+    }).catch(err => {
+        res.send(err);
+    });
+
+});
+posts.get('/userPost/dashboard', (req, res) => {
+    post.belongsTo(user, {foreignKey: 'ownerID'});
+    user.hasMany(post, {foreignKey: 'ownerID'});
+
+    postComments.belongsTo(post, {foreignKey: 'postID'});
+    post.hasMany(postComments, {foreignKey: 'postID'});
+
+    post.findAll({
+        where: {
+
         },
         include: [
             {
