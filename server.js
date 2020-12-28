@@ -1,11 +1,16 @@
-const express = require('express');
-const cors = require('cors');
 const bodyParser = require('body-parser');
-const app = express();
-const port = process.env.PORT || 3000;
+const app = require('express')();
+const http = require('http').createServer(app);
+const port = +process.env.PORT || 3000;
+const io = require('socket.io')(http, {
+    cors: {
+        origin: '*',
+    }
+});
 
 
-app.use(cors());
+
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -19,6 +24,15 @@ app.use('/api/photo', Photos);
 app.use('/api/posts', Posts);
 app.use('/api/storage', Storage);
 
-app.listen(port, () => {
+
+http.listen(port, () => {
     console.log(`server is running on port ${port}`);
 })
+
+io.on('connection', (socket) => {
+    socket.on('message', (msg) => {
+        console.log('*----*********************************************************************************************',msg);
+        socket.broadcast.emit('message-broadcast', msg);
+    });
+    console.log('-*-*-*-*-*-*-*-*-*-*-*-*-*-*-', socket.id);
+});

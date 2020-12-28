@@ -2,11 +2,11 @@ const Sequelize = require("sequelize");
 
 const express = require('express');
 const posts = express.Router();
-const cors = require('cors');
+
 const jwt = require('jsonwebtoken');
 
 
-posts.use(cors());
+
 const fs = require('fs');
 const accountType = require('../middlewares/accountType')
 const isAuth = require('../middlewares/isAuth')

@@ -1,6 +1,6 @@
 const express = require('express');
 const photos = express.Router();
-const cors = require('cors');
+
 const jwt = require('jsonwebtoken');
 const path = require('path');
 const fs = require('fs');
@@ -15,7 +15,6 @@ const json = require("body-parser/lib/types/json");
 const storage = require("../middlewares/storage");
 const getSize = require('get-folder-size');
 
-photos.use(cors());
 
 process.env.SECRET_KEY = 'secret';
 

@@ -1,6 +1,6 @@
 const express = require('express');
 const users = express.Router();
-const cors = require('cors');
+
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const fs = require('fs');
@@ -9,7 +9,7 @@ process.env.SECRET_KEY = 'secret';
 const User = require('../models/UsersModel/User');
 const isAuth = require('../middlewares/isAuth');
 
-users.use(cors());
+
 
 const saltRound = 10;
 
