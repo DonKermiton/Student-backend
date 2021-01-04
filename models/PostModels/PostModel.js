@@ -17,6 +17,12 @@ module.exports = db.sequelize.define(
         },
         text: {
             type: Sequelize.STRING,
+        },
+        likes: {
+            type: Sequelize.INTEGER
+        },
+        comments: {
+            type: Sequelize.INTEGER
         }
     },
     {

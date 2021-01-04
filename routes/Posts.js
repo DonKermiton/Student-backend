@@ -3,10 +3,8 @@ const Sequelize = require("sequelize");
 const express = require('express');
 const posts = express.Router();
 
-const jwt = require('jsonwebtoken');
 
-
-
+const moment = require('moment');
 const fs = require('fs');
 const accountType = require('../middlewares/accountType')
 const isAuth = require('../middlewares/isAuth')
@@ -34,11 +32,11 @@ posts.get('/userPost/size', (req, res) => {
             }
             const filesArray = [];
             // show only directory
-             const getDirectories = source =>
-                 fs.readdirSync(source, { withFileTypes: true })
-                     .filter(e => e.isDirectory())
-                        .map(e => e.name)
-                     .map(e => filesArray.push({name: e, isDirectory: true}))
+            const getDirectories = source =>
+                fs.readdirSync(source, {withFileTypes: true})
+                    .filter(e => e.isDirectory())
+                    .map(e => e.name)
+                    .map(e => filesArray.push({name: e, isDirectory: true}))
 
             getDirectories(p)
             // files.map(function (file) {
@@ -72,8 +70,8 @@ posts.put('/userPost/create', isAuth, (req, res) => {
     }
 });
 
-posts.put('/userPost/comment/create',isAuth, (req, res) => {
-    console.log(req.query)
+posts.put('/userPost/comment/create', isAuth, (req, res) => {
+    console.log('teraz')
 
     const obj = {
         postID: req.body.postID,
@@ -82,7 +80,7 @@ posts.put('/userPost/comment/create',isAuth, (req, res) => {
         created: new Date(),
     }
     postComments.create(obj).then(data => {
-       return data;
+        return data;
     }).then(data => {
         user.findOne({
             attributes: ['id', 'first_name', 'last_name'],
@@ -131,15 +129,25 @@ posts.get('/userPost/dashboard', (req, res) => {
     postComments.belongsTo(post, {foreignKey: 'postID'});
     post.hasMany(postComments, {foreignKey: 'postID'});
 
-    post.findAll({
-        where: {
 
-        },
+    photo.belongsTo(post, {foreignKey: 'postID'});
+    post.hasMany(photo, {foreignKey: 'postID'});
+
+
+    post.findAll({
+        where: {},
         include: [
             {
                 model: user,
                 attributes: ['id', 'first_name', 'last_name'],
             },
+            {
+                model: photo,
+            },
+            {
+                model: postComments
+            }
+
         ],
         group: 'posts.postID',
         order: [['created', "DESC"]],
@@ -219,16 +227,21 @@ posts.get('/userPost/Comment', (req, res) => {
     user.hasMany(postComments, {foreignKey: 'ownerID'});
 
 
-    postComments.findOne({
+    postComments.findAll({
+
         where: {
+            // Sequelize:
+            //     Sequelize.where(
+            //     Sequelize.fn("DATE", Sequelize.col("created")), '2021-01-01')
             postID: +req.query.postID,
+
         },
         include: [{
             model: user,
             attributes: ['id', 'first_name', 'last_name'],
         }],
         offset: +req.query.skip,
-        limit: 1,
+        limit:  +req.query.limit,
     }).then(e => res.json(e))
         .catch(err => res.send(err));
 
