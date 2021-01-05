@@ -11,7 +11,8 @@ const isAuth = require('../middlewares/isAuth')
 const post = require('../models/PostModels/PostModel');
 const postComments = require('../models/PostModels/PostComments');
 const user = require('../models/UsersModel/User');
-const photo = require('../models/PhotoModel/Photo')
+const photo = require('../models/PhotoModel/Photo');
+const postLikes = require('../models/PostModels/PostLikes');
 
 const postPhotoDic = require('../models/PostModels/post-photo-dic');
 const getSize = require('get-folder-size');
@@ -129,7 +130,6 @@ posts.get('/userPost/dashboard', (req, res) => {
     postComments.belongsTo(post, {foreignKey: 'postID'});
     post.hasMany(postComments, {foreignKey: 'postID'});
 
-
     photo.belongsTo(post, {foreignKey: 'postID'});
     post.hasMany(photo, {foreignKey: 'postID'});
 
@@ -146,7 +146,7 @@ posts.get('/userPost/dashboard', (req, res) => {
             },
             {
                 model: postComments
-            }
+            },
 
         ],
         group: 'posts.postID',
@@ -267,6 +267,18 @@ posts.get('/userPost/Comment/all', (req, res) => {
 
 });
 
+posts.get('/userPost/Like/your',isAuth, (req, res) => {
+   postLikes.findOne({
+       where: {
+           postID: +req.query.id,
+           //todo change
+           userID: +res.locals.user.id,
+       }
+   }).then(data => {
+       console.log(data);
+       res.json(data);
+   }).catch(err => res.send(err));
+});
 
 posts.delete('/userPost', isAuth, (req, res) => {
 
