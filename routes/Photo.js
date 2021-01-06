@@ -73,7 +73,7 @@ photos.put('/upload', isAuth, upload.single('file'), (req, res) => {
         const photoObj = {
             imgLink: `${req.file.filename}.jpg`,
             ownerID: `${res.locals.user.id}`,
-            postID: req.header('postID'),
+            postID: `${req.query.postID}`,
             Like: 0,
             isFront: 0,
             isBackground: 0,
