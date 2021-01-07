@@ -102,6 +102,10 @@ posts.get('/userPost/selected', (req, res) => {
     postComments.belongsTo(post, {foreignKey: 'postID'});
     post.hasMany(postComments, {foreignKey: 'postID'});
 
+    photo.belongsTo(post, {foreignKey: 'postID'});
+    post.hasMany(photo, {foreignKey: 'postID'});
+
+
     post.findAll({
         where: {
             ownerID: +req.query.id,
@@ -111,6 +115,13 @@ posts.get('/userPost/selected', (req, res) => {
                 model: user,
                 attributes: ['id', 'first_name', 'last_name'],
             },
+            {
+                model: photo,
+            },
+            {
+                model: postComments
+            },
+
         ],
         group: 'posts.postID',
         order: [['created', "DESC"]],
