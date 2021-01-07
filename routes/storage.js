@@ -23,13 +23,13 @@ const mime = {
     jpg: 'image/jpeg',
     png: 'image/png',
     svg: 'image/svg+xml',
-    js: 'application/javascript',
     doc: 'application/msword',
     rar: 'application/vnd.rar',
     tar: 'application/x-tar',
     xls: 'application/vnd.ms-excel',
     zip: 'application/zip',
-    pdf: 'application/pdf'
+    pdf: 'application/pdf',
+    deb: 'application/vnd.debian.binary-package'
 };
 
 storage.get('/space', isAuth, (req, res) => {

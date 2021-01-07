@@ -1,6 +1,6 @@
 const express = require('express');
 const photos = express.Router();
-const cors = require('cors');
+
 const jwt = require('jsonwebtoken');
 const path = require('path');
 const fs = require('fs');
@@ -15,7 +15,6 @@ const json = require("body-parser/lib/types/json");
 const storage = require("../middlewares/storage");
 const getSize = require('get-folder-size');
 
-photos.use(cors());
 
 process.env.SECRET_KEY = 'secret';
 
@@ -74,7 +73,7 @@ photos.put('/upload', isAuth, upload.single('file'), (req, res) => {
         const photoObj = {
             imgLink: `${req.file.filename}.jpg`,
             ownerID: `${res.locals.user.id}`,
-            postID: req.header('postID'),
+            postID: `${req.query.postID}`,
             Like: 0,
             isFront: 0,
             isBackground: 0,
