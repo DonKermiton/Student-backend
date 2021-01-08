@@ -34,7 +34,7 @@ io.on('connection', (socket) => {
 
     socket.on('user-connect', (User) => {
         console.log(User);
-        socket.emit('user-connected', users);
+        socket.emit('user-connected', {socket: socket.id, users});
         users.push({User, socketID: socket.id});
         socket.broadcast.emit('user-status-active', {User, socketID: socket.id});
 
@@ -52,23 +52,29 @@ io.on('connection', (socket) => {
     });
 
     socket.on('send-privy-message', (msg) => {
-        // socket.broadcast.to(msg.userID.socketID).emit('send-privy-message', msg.message);
-        //  socket.emit('send-privy-message', msg.message);
-        // socket.broadcast.to(msg.userID.socketID).emit('send-privy-message', msg);
         console.log('+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_', msg.message);
         socket.to(msg.userID.socketID).emit('send-privy-message', {msg, text: msg.message, socket: socket.id});
-        // socket.broadcast.to(msg.userID.socketID).emit('send-privy-message', msg);
-        // io.socket.to(msg.userID.socketID).emit('send-privy-message', msg);
-        // io.sockets.emit('send-privy-message', msg.message)
     });
+
+    socket.on('remove-socket', () => {
+        for (let i = 0; i < users.length; i++) {
+            if (users[i].socketID === socket.id) {
+                users.splice(i, 1);
+                console.log(users);
+            }
+            socket.broadcast.emit('user-status-inactive', users);
+        }
+    })
 
     socket.on("disconnect", () => {
         console.log('_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_');
         for (let i = 0; i < users.length; i++) {
             if (users[i].socketID === socket.id) {
-                socket.broadcast.emit('user-status-inactive', i);
                 users.splice(i, 1);
+                console.log(users);
             }
+            socket.broadcast.emit('user-status-inactive', users);
+
         }
 
     });
