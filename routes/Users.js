@@ -15,7 +15,6 @@ const saltRound = 10;
 
 users.post('/register', (req, res) => {
     const today = new Date()
-    console.log(req.body);
     const userData = {
         first_name: req.body.first_name,
         last_name: req.body.last_name,
@@ -70,7 +69,6 @@ users.post('/login', (req, res) => {
                 }
                 if (result) {
                     let token = jwt.sign(user.dataValues, process.env.SECRET_KEY)
-                    console.log(token);
 
                     res.json({token: token});
                 } else {
@@ -93,6 +91,22 @@ users.get('/profile', isAuth, (req, res) => {
         where: {
             id: res.locals.user.id,
         }
+    }).then(user => {
+        if (user) {
+            res.json(user);
+        } else {
+            res.send("user does not exist");
+        }
+    }).catch(err => {
+        res.send('error' + err);
+    })
+});
+
+users.get('/profile/all', isAuth, (req, res) => {
+    // const decode = jwt.verify(req.headers['authorization'], process.env.SECRET_KEY);
+
+    User.findAll({
+        attributes: ['first_name', 'last_name', 'email', 'id', 'accountType', 'group'],
     }).then(user => {
         if (user) {
             res.json(user);

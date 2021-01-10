@@ -47,7 +47,6 @@ posts.get('/userPost/size', (req, res) => {
             // }).forEach(function (file) {
             //    filesArray.push({name: file, isDirectory: false});
             // });
-            console.log(filesArray);
         });
         // return value in MB
         const sizeAfter = (size / 1024 / 1024).toFixed(2);
@@ -56,7 +55,6 @@ posts.get('/userPost/size', (req, res) => {
 });
 
 posts.put('/userPost/create', isAuth, (req, res) => {
-    console.log(req.body);
     const postObj = {
         ownerID: +res.locals.user.id,
         created: new Date(),
@@ -72,7 +70,6 @@ posts.put('/userPost/create', isAuth, (req, res) => {
 });
 
 posts.put('/userPost/comment/create', isAuth, (req, res) => {
-    console.log('teraz')
 
     const obj = {
         postID: req.body.postID,
@@ -286,7 +283,6 @@ posts.get('/userPost/Like/your',isAuth, (req, res) => {
            userID: +res.locals.user.id,
        }
    }).then(data => {
-       console.log(data);
        res.json(data);
    }).catch(err => res.send(err));
 });

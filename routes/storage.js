@@ -58,7 +58,6 @@ storage.put('/space', isAuth, upload.single('file'), (req, res) => {
             res.send('no enough free space')
             return;
         }
-        console.log(req.file);
         const tempPath = req.file.path;
 
         let fileMimeExt;
@@ -76,7 +75,6 @@ storage.put('/space', isAuth, upload.single('file'), (req, res) => {
             });
         }
         let targetPath
-        console.log(path.extname(req.file.originalname));
         if (!path.extname(req.file.originalname)) {
              targetPath = path.join(__dirname, `../storage/${req.header('activePath')}/${req.file.originalname}.${fileMimeExt}`);
         } else {

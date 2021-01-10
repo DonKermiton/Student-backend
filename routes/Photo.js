@@ -51,7 +51,6 @@ photos.get('/getPhoto/:userID/:photoID', isAuth, (req, res) => {
 });
 
 photos.put('/upload', isAuth, upload.single('file'), (req, res) => {
-    console.log(req.file);
     getSize(`images/${res.locals.user.id}`, (err, dirSize) => {
         // sumFile return value in MB
         const sumFile = ((dirSize + req.file.size) / 1024 / 1024);
@@ -120,8 +119,6 @@ photos.get('/countUserPhoto/:id', (req, res) => {
 
 photos.delete('/delete/:url/:id', isAuth, (req, res) => {
     const url = req.params.url;
-    console.log(url);
-
 
     try {
         photo.findOne({

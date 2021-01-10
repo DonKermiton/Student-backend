@@ -11,12 +11,17 @@ const io = require('socket.io')(http, {
 
 
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({extended: true}));
+app.use(bodyParser.urlencoded({
+    extended: true
+}));
 
 const Users = require('./routes/Users');
 const Photos = require('./routes/Photo');
 const Posts = require('./routes/Posts');
 const Storage = require('./routes/storage');
+const {
+    setInterval
+} = require('timers');
 
 app.use('/api/users', Users);
 app.use('/api/photo', Photos);
@@ -29,17 +34,27 @@ http.listen(port, () => {
 })
 
 const users = []
-
+timeoutHandler = true;
 io.on('connection', (socket) => {
 
     socket.on('user-connect', (User) => {
-        console.log(User);
-        socket.emit('user-connected', {socket: socket.id, users});
-        users.push({User, socketID: socket.id});
-        socket.broadcast.emit('user-status-active', {User, socketID: socket.id});
+        
+        users.push({
+            User,
+            socketID: socket.id
+        });
+        socket.emit('user-connected', {
+            socket: socket.id,
+            users
+        });
 
-        // socket.broadcast.emit({User, socketID: socket.id});
-
+        // TODO socket.broadcast to all live user (for while send whole array)
+        // FIXME 
+        
+        socket.broadcast.emit('user-status-active', {
+            socket: socket.id,
+            users
+        });
     });
 
     socket.on('message', (msg) => {
@@ -53,7 +68,11 @@ io.on('connection', (socket) => {
 
     socket.on('send-privy-message', (msg) => {
         console.log('+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_', msg.message);
-        socket.to(msg.userID.socketID).emit('send-privy-message', {msg, text: msg.message, socket: socket.id});
+        socket.to(msg.userID.socketID).emit('send-privy-message', {
+            msg,
+            text: msg.message,
+            socket: socket.id
+        });
     });
 
     socket.on('remove-socket', () => {
@@ -62,7 +81,7 @@ io.on('connection', (socket) => {
                 users.splice(i, 1);
                 console.log(users);
             }
-            socket.broadcast.emit('user-status-inactive', users);
+            socket.broadcast.emit('user-status-active', users);
         }
     })
 
@@ -73,10 +92,8 @@ io.on('connection', (socket) => {
                 users.splice(i, 1);
                 console.log(users);
             }
-            socket.broadcast.emit('user-status-inactive', users);
-
         }
-
+        socket.broadcast.emit('user-status-active', users);
     });
 
     console.log('-*-*-*-*-*-*-*-*-*-*-*-*-*-*-', socket.id);
