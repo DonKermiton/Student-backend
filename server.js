@@ -28,16 +28,42 @@ http.listen(port, () => {
     console.log(`server is running on port ${port}`);
 })
 
-const users = []
+const users = {
+    // User: [{
+    //     User: {},
+    //     socketID: []
+    // }],
+
+}
 
 io.on('connection', (socket) => {
 
     socket.on('user-connect', (User) => {
-        console.log(User);
-        socket.emit('user-connected', {socket: socket.id, users});
-        users.push({User, socketID: socket.id});
-        socket.broadcast.emit('user-status-active', {User, socketID: socket.id});
+        let exists = false;
 
+        if (users.User) {
+            for (let i = 0; i < users.User.length; i++) {
+                if (users.User[i].User.id === User.id) {
+                    users.User[i].socketID.push(socket.id);
+                    exists = true;
+                    break;
+                }
+            }
+        }
+
+        socket.emit('user-connected', {socket: socket.id, users});
+
+        if (!exists) {
+            const userWithSocket = {User, socketID: [socket.id]};
+            if(!users.User) {
+                users.User = [];
+            }
+            users.User.push(userWithSocket);
+        }
+        socket.broadcast.emit('user-status-active', {
+            User,
+            socketID: socket.id
+        });
         // socket.broadcast.emit({User, socketID: socket.id});
 
     });
@@ -46,42 +72,33 @@ io.on('connection', (socket) => {
         socket.broadcast.emit('message-broadcast', msg);
     });
 
-
-    socket.on('create-message', (msg) => {
-        console.log(msg);
-    });
-
     socket.on('send-privy-message', (msg) => {
-        console.log('+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_', msg.message);
-        socket.to(msg.userID.socketID).emit('send-privy-message', {msg, text: msg.message, socket: socket.id});
+        socket.to(msg.selectedToken).emit('send-privy-message', {
+            from: msg.yourSocket,
+            to: msg.selectedToken,
+            message: msg.message
+        });
+        // socket.to(msg.userID.socketID).emit('send-privy-message', {msg, text: msg.message, socket: socket.id});
     });
 
     socket.on('remove-socket', () => {
-        for (let i = 0; i < users.length; i++) {
-            if (users[i].socketID === socket.id) {
-                users.splice(i, 1);
-                console.log(users);
-            }
-            socket.broadcast.emit('user-status-inactive', users);
+        socket.broadcast.emit('user-status-inactive', socket.id);
+
+        for (let i = 0; i < users.User.length; i++) {
+            console.log(users.User[i])
         }
     })
 
     socket.on("disconnect", () => {
-        console.log('_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_');
         for (let i = 0; i < users.length; i++) {
             if (users[i].socketID === socket.id) {
                 users.splice(i, 1);
-                console.log(users);
+                break;
             }
             socket.broadcast.emit('user-status-inactive', users);
 
         }
-
     });
 
-    console.log('-*-*-*-*-*-*-*-*-*-*-*-*-*-*-', socket.id);
 });
 
-io.on('disconnect', () => {
-    console.log('*----*********************************************************************************************');
-})
