@@ -38,6 +38,15 @@ const users = {
 
 io.on('connection', (socket) => {
 
+    socket.on('subscribeToPost', (postId) => {
+        socket.join(postId);
+    });
+
+    socket.on('post-events', (event) => {
+        console.log(event);
+        socket.to(event.postID).emit(event.data);
+    })
+
     socket.on('user-connect', (User) => {
         let exists = false;
 
@@ -90,7 +99,9 @@ io.on('connection', (socket) => {
     })
 
     socket.on("disconnect", () => {
+
         for (let i = 0; i < users.length; i++) {
+            console.log(users);
             if (users[i].socketID === socket.id) {
                 users.splice(i, 1);
                 break;
