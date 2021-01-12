@@ -15,6 +15,7 @@ const saltRound = 10;
 
 users.post('/register', (req, res) => {
     const today = new Date()
+    console.log(req.body);
     const userData = {
         first_name: req.body.first_name,
         last_name: req.body.last_name,
@@ -25,10 +26,10 @@ users.post('/register', (req, res) => {
     }
 
     User.findOne({
-        where: {
-            email: req.body.email,
-        }
-    })
+            where: {
+                email: req.body.email,
+            }
+        })
         .then(user => {
             if (!user) {
                 bcrypt.genSalt(saltRound, (err, salt) => {
@@ -38,7 +39,9 @@ users.post('/register', (req, res) => {
                             .then(user => {
                                 fs.mkdir(`images/${user.id}`, (err) => console.log(err))
                                 let token = jwt.sign(user.dataValues, process.env.SECRET_KEY);
-                                res.json({token: token})
+                                res.json({
+                                    token: token
+                                })
                             })
                             .catch(err => {
                                 res.send('error: ' + err)
@@ -46,7 +49,9 @@ users.post('/register', (req, res) => {
                     })
                 })
             } else {
-                res.json({error: 'User already exists'})
+                res.json({
+                    error: 'User already exists'
+                })
             }
         })
         .catch(err => {
@@ -69,8 +74,11 @@ users.post('/login', (req, res) => {
                 }
                 if (result) {
                     let token = jwt.sign(user.dataValues, process.env.SECRET_KEY)
+                    console.log(token);
 
-                    res.json({token: token});
+                    res.json({
+                        token: token
+                    });
                 } else {
                     res.send('wrong password');
                 }
@@ -103,19 +111,10 @@ users.get('/profile', isAuth, (req, res) => {
 });
 
 users.get('/profile/all', isAuth, (req, res) => {
-    // const decode = jwt.verify(req.headers['authorization'], process.env.SECRET_KEY);
-
     User.findAll({
-        attributes: ['first_name', 'last_name', 'email', 'id', 'accountType', 'group'],
-    }).then(user => {
-        if (user) {
-            res.json(user);
-        } else {
-            res.send("user does not exist");
-        }
-    }).catch(err => {
-        res.send('error' + err);
-    })
+            attributes: ['first_name', 'last_name', 'email', 'id', 'accountType']
+        }).then(user => res.json(user))
+        .catch(err => res.send(err));
 });
 
 users.get('/profile/:id', (req, res) => {

@@ -4,7 +4,7 @@ const sequelize = new Sequelize('StudentPanel', 'michal', 'Password.1', {
     host: 'localhost',
     dialect: 'mysql',
     operatorsAliases: false,
-    logging: false
+    logging: false,
 });
 
 sequelize.authenticate()
