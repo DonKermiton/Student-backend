@@ -29,10 +29,10 @@ http.listen(port, () => {
 })
 
 const users = {
-    // User: [{
-    //     User: {},
-    //     socketID: []
-    // }],
+    User: [{
+        User: {},
+        socketID: []
+    }],
 
 }
 
@@ -44,12 +44,13 @@ io.on('connection', (socket) => {
 
     socket.on('post-events', (event) => {
         console.log(event);
-        socket.to(event.postID).emit(event.data);
+        io.sockets.in(event.postId).emit('post-event', {text: 'test'});
+        // console.log(event);
+        // socket.to(event.postID).emit(event.data);
     })
 
     socket.on('user-connect', (User) => {
         let exists = false;
-
         if (users.User) {
             for (let i = 0; i < users.User.length; i++) {
                 if (users.User[i].User.id === User.id) {
@@ -64,14 +65,15 @@ io.on('connection', (socket) => {
 
         if (!exists) {
             const userWithSocket = {User, socketID: [socket.id]};
-            if(!users.User) {
+            if (!users.User) {
                 users.User = [];
             }
             users.User.push(userWithSocket);
         }
         socket.broadcast.emit('user-status-active', {
             User,
-            socketID: socket.id
+            socketID: socket.id,
+            exists
         });
         // socket.broadcast.emit({User, socketID: socket.id});
 
@@ -90,26 +92,32 @@ io.on('connection', (socket) => {
         // socket.to(msg.userID.socketID).emit('send-privy-message', {msg, text: msg.message, socket: socket.id});
     });
 
-    socket.on('remove-socket', () => {
-        socket.broadcast.emit('user-status-inactive', socket.id);
-
-        for (let i = 0; i < users.User.length; i++) {
-            console.log(users.User[i])
-        }
-    })
-
     socket.on("disconnect", () => {
+        console.log(typeof users.User);
+        let i = 0;
+        let j = 0;
+        let isEmpty;
 
-        for (let i = 0; i < users.length; i++) {
-            console.log(users);
-            if (users[i].socketID === socket.id) {
-                users.splice(i, 1);
-                break;
+        for (const user of users.User) {
+            for (const socketIDElement of user.socketID) {
+                j++;
+                if (socketIDElement === socket.id) {
+                    console.log('_+_+_+_+_+_+_+_+_+_+_+__+_+_+_+_+_+_+_+_+_+_+__+_+_+_+_+_+_+_+_+_+_+__+_+_+_+_+_+_+_+_+_+_+_', socketIDElement);
+                    user.socketID.splice(j, 1);
+                    isEmpty = user.socketID.length === 0;
+
+                    socket.broadcast.emit('user-status-inactive', {socket: socket.id, i, j, isEmpty});
+
+                    return;
+                }
             }
-            socket.broadcast.emit('user-status-inactive', users);
-
+            j = 0;
+            i++;
         }
+
+
     });
+
 
 });
 
