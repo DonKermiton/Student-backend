@@ -11,7 +11,9 @@ const io = require('socket.io')(http, {
 
 
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({extended: true}));
+app.use(bodyParser.urlencoded({
+    extended: true
+}));
 
 const Users = require('./routes/Users');
 const Photos = require('./routes/Photo');
@@ -44,37 +46,61 @@ io.on('connection', (socket) => {
 
     socket.on('post-events', (event) => {
         console.log(event);
-        io.sockets.in(event.postId).emit('post-event', {text: 'test'});
+        io.sockets.in(event.postId).emit('post-event', {
+            text: 'test'
+        });
         // console.log(event);
         // socket.to(event.postID).emit(event.data);
     })
 
     socket.on('user-connect', (User) => {
         let exists = false;
-        if (users.User) {
-            for (let i = 0; i < users.User.length; i++) {
-                if (users.User[i].User.id === User.id) {
-                    users.User[i].socketID.push(socket.id);
-                    exists = true;
-                    break;
-                }
+        let i = 0;
+        // search for same user id
+        for (i; i < users.User.length; i++) {
+            if (users.User[i].User.id === User.id) {
+                users.User[i].socketID.push(socket.id);
+                exists = true;
+                break;
             }
         }
 
-        socket.emit('user-connected', {socket: socket.id, users});
-
+        // if not exists already in table add it
         if (!exists) {
-            const userWithSocket = {User, socketID: [socket.id]};
+            const userWithSocket = {
+                User,
+                socketID: [socket.id]
+            };
             if (!users.User) {
                 users.User = [];
             }
             users.User.push(userWithSocket);
         }
+
         socket.broadcast.emit('user-status-active', {
             User,
             socketID: socket.id,
-            exists
+            exists,
+            i
         });
+
+
+        // socket.emit('user-connected', {
+        //     socket: socket.id,
+        //     users
+        // });
+
+        // if (!exists) {
+        //     const userWithSocket = {
+        //         User,
+        //         socketID: [socket.id]
+        //     };
+        //     if (!users.User) {
+        //         users.User = [];
+        //     }
+        //     users.User.push(userWithSocket);
+        // }
+
         // socket.broadcast.emit({User, socketID: socket.id});
 
     });
@@ -102,19 +128,24 @@ io.on('connection', (socket) => {
             for (const socketIDElement of user.socketID) {
 
                 if (socketIDElement === socket.id) {
-                    
+
                     user.socketID.splice(j, 1);
                     console.log(user.socketID);
                     isEmpty = user.socketID.length === 0;
-                    socket.broadcast.emit('user-status-inactive', {socket: socket.id, i, j, isEmpty});
-                    
+                    socket.broadcast.emit('user-status-inactive', {
+                        socket: socket.id,
+                        i,
+                        j,
+                        isEmpty
+                    });
+
                     return;
                 }
                 j++;
-                
+
             }
             j = 0;
-            
+
             i++;
         }
 
@@ -123,4 +154,3 @@ io.on('connection', (socket) => {
 
 
 });
-
