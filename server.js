@@ -100,18 +100,21 @@ io.on('connection', (socket) => {
 
         for (const user of users.User) {
             for (const socketIDElement of user.socketID) {
-                j++;
+
                 if (socketIDElement === socket.id) {
-                    console.log('_+_+_+_+_+_+_+_+_+_+_+__+_+_+_+_+_+_+_+_+_+_+__+_+_+_+_+_+_+_+_+_+_+__+_+_+_+_+_+_+_+_+_+_+_', socketIDElement);
+                    
                     user.socketID.splice(j, 1);
+                    console.log(user.socketID);
                     isEmpty = user.socketID.length === 0;
-
                     socket.broadcast.emit('user-status-inactive', {socket: socket.id, i, j, isEmpty});
-
+                    
                     return;
                 }
+                j++;
+                
             }
             j = 0;
+            
             i++;
         }
 
