@@ -64,6 +64,12 @@ io.on('connection', (socket) => {
                 break;
             }
         }
+        socket.emit('user-connected', {
+                socket: socket.id,
+                users
+            });
+    
+        
 
         // if not exists already in table add it
         if (!exists) {
@@ -138,6 +144,12 @@ io.on('connection', (socket) => {
                         j,
                         isEmpty
                     });
+
+                    if(isEmpty) {
+                        console.log('przed', users);
+                        users.User.splice(i,1);
+                        console.log('po', users);
+                    }
 
                     return;
                 }
