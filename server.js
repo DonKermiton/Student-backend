@@ -64,11 +64,7 @@ io.on('connection', (socket) => {
                 break;
             }
         }
-        socket.emit('user-connected', {
-                socket: socket.id,
-                users
-            });
-    
+       
         
 
         // if not exists already in table add it
@@ -82,6 +78,12 @@ io.on('connection', (socket) => {
             }
             users.User.push(userWithSocket);
         }
+
+        socket.emit('user-connected', {
+            socket: socket.id,
+            users
+        });
+
 
         socket.broadcast.emit('user-status-active', {
             User,
